@@ -29,10 +29,6 @@ public class AnalysisController {
         return coverageService.generateCACC(request.getExpression());
     }
 
-    @GetMapping("/hello")
-    public String sayHello() {
-        return "Logic Analyzer Backend is Running!";
-    }
     @PostMapping("/junit")
     public Map<String, String> getJUnitCode(@RequestBody AnalysisRequest request) {
         String type = (request.getType() == null) ? "cacc" : request.getType();
