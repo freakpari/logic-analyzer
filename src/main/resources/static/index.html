@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic Coverage Analyzer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      padding-top: 40px;
+      padding-bottom: 40px;
+    }
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+      padding: 40px;
+      border: none;
+    }
+    h2 {
+      font-weight: 600;
+      color: #2c3e50;
+      letter-spacing: -0.5px;
+    }
+    .form-control, .form-select {
+      border-radius: 12px;
+      padding: 12px 15px;
+      border: 1px solid #e0e0e0;
+      background-color: #f8f9fa;
+    }
+    .form-control:focus, .form-select:focus {
+      box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+      border-color: #0d6efd;
+      background-color: #fff;
+    }
+    .btn {
+      border-radius: 12px;
+      padding: 10px 24px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .btn-primary { background: linear-gradient(45deg, #0d6efd, #0099ff); border: none; }
+    .btn-danger { background: linear-gradient(45deg, #dc3545, #ff6b6b); border: none; }
+    .btn-warning { background: linear-gradient(45deg, #ffc107, #ffdb4d); border: none; color: #333; }
+
+    .result-box { display: none; animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .table { border-radius: 12px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.02); }
+    .table thead { background: #34495e; color: white; }
+    .table th { border: none; padding: 15px; font-weight: 500; }
+    .table td { padding: 12px; border-color: #f1f1f1; }
+
+    .badge-true { background-color: #d1e7dd; color: #0f5132; padding: 6px 14px; border-radius: 20px; font-weight: 600; }
+    .badge-false { background-color: #f8d7da; color: #842029; padding: 6px 14px; border-radius: 20px; font-weight: 600; }
+
+    .section-divider {
+      height: 1px;
+      background: #eee;
+      margin: 30px 0;
+    }
+    .controls-container {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="main-card">
+    <h2 class="text-center mb-4">Logic Coverage Analyzer</h2>
+
+    <div class="mb-4">
+      <label for="expression" class="form-label text-muted fw-bold">Boolean Expression</label>
+      <input type="text" class="form-control" id="expression" placeholder="e.g. a or (b and c)">
+      <div class="form-text mt-2">
+        <span class="badge bg-light text-dark border">AND</span>
+        <span class="badge bg-light text-dark border">OR</span>
+        <span class="badge bg-light text-dark border">NOT</span>
+      </div>
+    </div>
+
+    <div class="controls-container">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-4 d-flex gap-2 justify-content-center justify-content-md-start">
+          <button onclick="analyze('coc')" class="btn btn-primary w-100">CoC Analysis</button>
+          <button onclick="analyze('cacc')" class="btn btn-danger w-100">CACC Analysis</button>
+        </div>
+
+        <div class="col-md-8">
+          <div class="d-flex gap-2 justify-content-center justify-content-md-end">
+            <select class="form-select flex-grow-1" id="junitType" style="max-width: 300px;">
+              <option value="cacc">CACC Tests</option>
+              <option value="coc">CoC Tests</option>
+            </select>
+            <button onclick="generateJunit()" class="btn btn-warning">Generate Code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultSection" class="result-box mt-5">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 id="resultTitle" class="m-0 text-secondary">Results</h4>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover text-center align-middle mb-0">
+          <thead class="table-dark">
+          <tr id="tableHeader"></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="junitModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-dark text-white border-0">
+        <h5 class="modal-title fw-light">Generated JUnit 5 Code</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+                <textarea id="codeArea" class="form-control border-0 rounded-0 p-3" rows="15"
+                          style="font-family: 'Consolas', monospace; background: #282c34; color: #abb2bf; resize: none;" readonly></textarea>
+      </div>
+      <div class="modal-footer border-0 bg-light">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-info text-white btn-sm" onclick="downloadCode()">Download .java</button>
+        <button type="button" class="btn btn-success btn-sm" onclick="copyToClipboard()">Copy Code</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  async function analyze(type) {
+    const expr = document.getElementById('expression').value;
+    if (!expr.trim()) {
+      alert("Please enter an expression!");
+      return;
+    }
+
+    const endpoint = `/api/analyze/${type}`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression: expr })
+      });
+
+      if (!response.ok) throw new Error("Server Error");
+
+      const data = await response.json();
+      renderTable(data, type);
+
+    } catch (error) {
+      console.error(error);
+      alert("Error connecting to server.");
+    }
+  }
+
+  function renderTable(data, type) {
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    const resultSection = document.getElementById('resultSection');
+    const resultTitle = document.getElementById('resultTitle');
+
+    resultSection.style.display = 'block';
+    resultTitle.innerText = type === 'coc' ? "Combinatorial Coverage (CoC)" : "Correlated Active Clause Coverage (CACC)";
+
+    tableHeader.innerHTML = '';
+    tableBody.innerHTML = '';
+
+    if (data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="100" class="text-muted p-4">No data found</td></tr>';
+      return;
+    }
+
+    const sampleInputs = data[0].inputs;
+    const variables = Object.keys(sampleInputs);
+
+    tableHeader.innerHTML += `<th>Case ID</th>`;
+    variables.forEach(v => {
+      tableHeader.innerHTML += `<th>${v}</th>`;
+    });
+    tableHeader.innerHTML += `<th>Output</th>`;
+
+    data.forEach(row => {
+      let tr = document.createElement('tr');
+
+      tr.innerHTML += `<td class="text-muted fw-bold">#${row.id}</td>`;
+
+      variables.forEach(v => {
+        const val = row.inputs[v];
+        tr.innerHTML += `<td><span class="${val ? 'badge-true' : 'badge-false'}">${val ? 'TRUE' : 'FALSE'}</span></td>`;
+      });
+
+      const res = row.result;
+      tr.innerHTML += `<td><strong>${res ? 'TRUE' : 'FALSE'}</strong></td>`;
+
+      tableBody.appendChild(tr);
+    });
+  }
+
+  async function generateJunit() {
+    const expr = document.getElementById('expression').value;
+    const type = document.getElementById('junitType').value;
+
+    if (!expr.trim()) { alert("Please enter an expression!"); return; }
+
+    try {
+      const response = await fetch('/api/analyze/junit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression: expr, type: type })
+      });
+
+      const data = await response.json();
+      document.getElementById('codeArea').value = data.code;
+      const myModal = new bootstrap.Modal(document.getElementById('junitModal'));
+      myModal.show();
+
+    } catch (error) {
+      console.error(error);
+      alert("Error generating code.");
+    }
+  }
+
+  function downloadCode() {
+    const text = document.getElementById("codeArea").value;
+    const blob = new Blob([text], { type: "text/plain" });
+    const anchor = document.createElement("a");
+    anchor.download = "GeneratedLogicTest.java";
+    anchor.href = window.URL.createObjectURL(blob);
+    anchor.target = "_blank";
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }
+
+  function copyToClipboard() {
+    const copyText = document.getElementById("codeArea");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("Copied to clipboard!");
+  }
+</script>
+
+</body>
+</html>
