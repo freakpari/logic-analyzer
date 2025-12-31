@@ -57,7 +57,9 @@ public class CoverageService {
         Set<Integer> requiredIds = new TreeSet<>();
 
         for (String major : vars) {
+            boolean pairFound = false;
             for (int i = 0; i < fullTable.size(); i++) {
+                if (pairFound) break;
                 for (int j = i + 1; j < fullTable.size(); j++) {
                     TestCase t1 = fullTable.get(i);
                     TestCase t2 = fullTable.get(j);
@@ -73,9 +75,12 @@ public class CoverageService {
                         }
                     }
                     if (!minorsMatch) continue;
+
                     if (t1.isResult() != t2.isResult()) {
                         requiredIds.add(t1.getId());
                         requiredIds.add(t2.getId());
+                        pairFound = true;
+                        break;
                     }
                 }
             }
