@@ -82,12 +82,6 @@ a or (b and not (c or d))
 
 ---
 
-## 📚 Theory: What is CACC?
-
-Correlated Active Clause Coverage (CACC) verifies that each clause independently affects the predicate outcome.
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! Fork the repo, create a feature branch, commit, push, and open a PR.
