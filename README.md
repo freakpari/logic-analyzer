@@ -8,7 +8,6 @@ A powerful full-stack tool designed for software testing.
 It visualizes boolean expressions, calculates **CoC** (Combinatorial Coverage) and **CACC** (Correlated Active Clause Coverage) metrics, and automatically generates optimized **JUnit 5** test cases.
 
 ![App Screenshot](screenshot.png)
-> *(Place a screenshot of your app named `screenshot.png` in the root directory)*
 
 ---
 
